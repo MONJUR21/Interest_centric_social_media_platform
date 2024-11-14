@@ -96,3 +96,31 @@ export const addReplyToComment = (req, res) => {
     }
   });
 };
+
+export const updateReply = (req, res) => {
+  const { replyId } = req.params;
+  const { content } = req.body;
+  const query = "UPDATE comment_replies SET content = ? WHERE id = ?";
+
+  db.query(query, [content, replyId], (err) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ message: "Reply updated successfully" });
+    }
+  });
+};
+
+export const deleteReply = (req, res) => {
+  const { replyId } = req.params;
+  const query = "DELETE FROM comment_replies WHERE id = ?";
+
+  db.query(query, [replyId], (err) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ message: "Reply deleted successfully" });
+    }
+  });
+};
+

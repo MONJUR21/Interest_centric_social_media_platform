@@ -6,7 +6,9 @@ import {
   updateComment,
   deleteComment,
   getRepliesForComment,
-  addReplyToComment
+  addReplyToComment,
+  updateReply,
+  deleteReply
 } from '../controllers/commentController.js';
 
 const router = express.Router();
@@ -19,5 +21,6 @@ router.delete('/:id', deleteComment);
 
 router.get('/:id/replies', getRepliesForComment);
 router.post('/:id/replies', addReplyToComment);
-
+router.put('/replies/:replyId', updateReply);     
+router.delete('/replies/:replyId', deleteReply);   
 export default router;
