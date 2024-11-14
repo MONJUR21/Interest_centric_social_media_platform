@@ -1,7 +1,5 @@
-// controllers/interestController.js
 import db from '../config/db.js';
 
-// Get all interests
 export const getAllInterests = (req, res) => {
   const query = 'SELECT * FROM interests';
 
@@ -15,7 +13,6 @@ export const getAllInterests = (req, res) => {
   });
 };
 
-// Get a specific interest by ID
 export const getInterestById = (req, res) => {
   const { id } = req.params;
   const query = 'SELECT * FROM interests WHERE id = ?';
@@ -32,7 +29,6 @@ export const getInterestById = (req, res) => {
   });
 };
 
-// Create a new interest
 export const createInterest = (req, res) => {
   const { name } = req.body;
   const query = 'INSERT INTO interests (name) VALUES (?)';
@@ -47,7 +43,6 @@ export const createInterest = (req, res) => {
   });
 };
 
-// Update an existing interest by ID
 export const updateInterest = (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
@@ -65,7 +60,6 @@ export const updateInterest = (req, res) => {
   });
 };
 
-// Delete an interest by ID
 export const deleteInterest = (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM interests WHERE id = ?';

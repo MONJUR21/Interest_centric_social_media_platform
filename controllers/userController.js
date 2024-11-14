@@ -1,7 +1,5 @@
-// controllers/userController.js
 import db from '../config/db.js';
 
-// Get all users
 export const getAllUsers = (req, res) => {
   db.query('SELECT * FROM users', (error, rows) => {
     if (error) {
@@ -12,7 +10,6 @@ export const getAllUsers = (req, res) => {
   });
 };
 
-// Get user by ID
 export const getUserById = (req, res) => {
   const { id } = req.params;
   db.query('SELECT * FROM users WHERE id = ?', [id], (error, rows) => {
@@ -26,7 +23,6 @@ export const getUserById = (req, res) => {
   });
 };
 
-// Create a new user
 export const createUser = (req, res) => {
   const { username, email, password, full_name, profile_picture, bio } = req.body;
   db.query(
@@ -41,7 +37,6 @@ export const createUser = (req, res) => {
   );
 };
 
-// Update a user
 export const updateUser = (req, res) => {
   const { id } = req.params;
   const { username, email, full_name, profile_picture, bio } = req.body;
@@ -57,7 +52,6 @@ export const updateUser = (req, res) => {
   );
 };
 
-// Delete a user
 export const deleteUser = (req, res) => {
   const { id } = req.params;
   db.query('DELETE FROM users WHERE id = ?', [id], (error) => {

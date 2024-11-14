@@ -8,7 +8,6 @@ import {
 
 const router = express.Router();
 
-// Routes for reactions on a post
 router.get('/post/:postId', getReactionsForPost);
 router.post('/', addReaction);
 router.delete('/:id', deleteReaction);

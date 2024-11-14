@@ -1,7 +1,5 @@
-// controllers/commentController.js
 import db from "../config/db.js";
 
-// Get all comments for a specific post
 export const getAllCommentsForPost = (req, res) => {
   const { postId } = req.params;
   const query = "SELECT * FROM comments WHERE post_id = ?";
@@ -15,7 +13,6 @@ export const getAllCommentsForPost = (req, res) => {
   });
 };
 
-// Get a specific comment by ID
 export const getCommentById = (req, res) => {
   const { id } = req.params;
   const query = "SELECT * FROM comments WHERE id = ?";
@@ -31,7 +28,6 @@ export const getCommentById = (req, res) => {
   });
 };
 
-// Create a new comment on a post
 export const createComment = (req, res) => {
   const { user_id, post_id, content } = req.body;
   const query =
@@ -46,7 +42,6 @@ export const createComment = (req, res) => {
   });
 };
 
-// Update a comment
 export const updateComment = (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
@@ -61,7 +56,6 @@ export const updateComment = (req, res) => {
   });
 };
 
-// Delete a comment
 export const deleteComment = (req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM comments WHERE id = ?";
@@ -75,7 +69,6 @@ export const deleteComment = (req, res) => {
   });
 };
 
-// Get all replies for a specific comment
 export const getRepliesForComment = (req, res) => {
   const { id } = req.params; // Comment ID
   const query = "SELECT * FROM comment_replies WHERE comment_id = ?";
@@ -89,9 +82,8 @@ export const getRepliesForComment = (req, res) => {
   });
 };
 
-// Add a reply to a specific comment
 export const addReplyToComment = (req, res) => {
-  const { id } = req.params; // Comment ID
+  const { id } = req.params;
   const { user_id, content } = req.body;
   const query =
     "INSERT INTO comment_replies (comment_id, user_id, content) VALUES (?, ?, ?)";

@@ -1,4 +1,3 @@
-// app.js
 import express from 'express';
 import cors from 'cors';
 import db from './config/db.js';
@@ -12,11 +11,9 @@ import notificationRoutes from './routes/notificationRoutes.js'; // Import the n
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Test database connection
 db.connect((err) => {
   if (err) {
     console.error('Database connection failed:', err);
@@ -25,16 +22,14 @@ db.connect((err) => {
   }
 });
 
-// Routes
 app.use('/api/users', userRoutes);
 app.use('/api/interests', interestRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/reactions', reactionRoutes);
 app.use('/api/follows', followRoutes);
-app.use('/api/notifications', notificationRoutes); // Add the notification routes
+app.use('/api/notifications', notificationRoutes);
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });

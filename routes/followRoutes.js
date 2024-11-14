@@ -1,4 +1,3 @@
-// routes/followRoutes.js
 import express from 'express';
 import {
   getFollowers,
@@ -9,7 +8,6 @@ import {
 
 const router = express.Router();
 
-// Routes to handle follows
 router.get('/followers/:userId', getFollowers);
 router.get('/following/:userId', getFollowing);
 router.post('/', followUser);

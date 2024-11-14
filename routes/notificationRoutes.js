@@ -1,4 +1,3 @@
-// routes/notificationRoutes.js
 import express from 'express';
 import {
   getUserNotifications,
@@ -8,8 +7,7 @@ import {
 
 const router = express.Router();
 
-// Routes to handle notifications
-router.get('/:userId', getUserNotifications);  // Get notifications for a specific user
-router.patch('/:notificationId', markNotificationAsRead); // Mark a notification as read
+router.get('/:userId', getUserNotifications); 
+router.patch('/:notificationId', markNotificationAsRead);
 
 export default router;

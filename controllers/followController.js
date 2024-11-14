@@ -1,8 +1,6 @@
-// controllers/followController.js
 import db from '../config/db.js';
 import { createNotification } from './notificationController.js';
 
-// Get a list of followers for a specific user
 export const getFollowers = (req, res) => {
   const { userId } = req.params;
   const query = `
@@ -21,7 +19,6 @@ export const getFollowers = (req, res) => {
   });
 };
 
-// Get a list of users that a specific user is following
 export const getFollowing = (req, res) => {
   const { userId } = req.params;
   const query = `
@@ -40,7 +37,6 @@ export const getFollowing = (req, res) => {
   });
 };
 
-// Follow a user
 export const followUser = (req, res) => {
   const { follower_id, followed_id } = req.body;
   const checkFollowQuery = 'SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?';
@@ -63,8 +59,6 @@ export const followUser = (req, res) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-
-      // Create a follow notification for the followed user
       createNotification(followed_id, 'follow', follower_id, `User ${follower_id} started following you`);
 
       res.status(201).json({ message: 'User followed successfully' });
@@ -72,7 +66,6 @@ export const followUser = (req, res) => {
   });
 };
 
-// Unfollow a user
 export const unfollowUser = (req, res) => {
   const { follower_id, followed_id } = req.body;
   const query = 'DELETE FROM follows WHERE follower_id = ? AND followed_id = ?';

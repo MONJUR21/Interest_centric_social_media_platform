@@ -1,7 +1,5 @@
-// controllers/postController.js
 import db from '../config/db.js';
 
-// Get all posts
 export const getAllPosts = (req, res) => {
   db.query('SELECT * FROM posts', (error, rows) => {
     if (error) {
@@ -11,7 +9,6 @@ export const getAllPosts = (req, res) => {
   });
 };
 
-// Get a specific post by ID
 export const getPostById = (req, res) => {
   const { id } = req.params;
   db.query('SELECT * FROM posts WHERE id = ?', [id], (error, rows) => {
@@ -25,7 +22,6 @@ export const getPostById = (req, res) => {
   });
 };
 
-// Create a new post
 export const createPost = (req, res) => {
   const { user_id, title, content, image } = req.body;
   db.query(
@@ -40,7 +36,6 @@ export const createPost = (req, res) => {
   );
 };
 
-// Update a post
 export const updatePost = (req, res) => {
   const { id } = req.params;
   const { title, content, image } = req.body;
@@ -56,7 +51,6 @@ export const updatePost = (req, res) => {
   );
 };
 
-// Delete a post
 export const deletePost = (req, res) => {
   const { id } = req.params;
   db.query('DELETE FROM posts WHERE id = ?', [id], (error) => {
@@ -67,7 +61,6 @@ export const deletePost = (req, res) => {
   });
 };
 
-// Get posts by user interests
 export const getPostsByUserInterest = (req, res) => {
   const { userId } = req.params;
   db.query(
