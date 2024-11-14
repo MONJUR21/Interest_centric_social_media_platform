@@ -7,8 +7,7 @@ import postRoutes from './routes/postRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import reactionRoutes from './routes/reactionRoutes.js';
 import followRoutes from './routes/followRoutes.js';
-import notificationRoutes from './routes/notificationRoutes.js'; // Import the notification routes
-
+import notificationRoutes from './routes/notificationRoutes.js';
 const app = express();
 
 app.use(cors());
@@ -35,7 +34,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
