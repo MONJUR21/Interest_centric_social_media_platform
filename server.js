@@ -8,6 +8,8 @@ import commentRoutes from './routes/commentRoutes.js';
 import reactionRoutes from './routes/reactionRoutes.js';
 import followRoutes from './routes/followRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import userInterestRoutes from './routes/userInterestRoutes.js';
+import postInterestRoutes from './routes/postInterestRoutes.js';
 const app = express();
 
 app.use(cors());
@@ -28,6 +30,8 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/reactions', reactionRoutes);
 app.use('/api/follows', followRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/user-interests', userInterestRoutes);
+app.use('/api/post-interests', postInterestRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
