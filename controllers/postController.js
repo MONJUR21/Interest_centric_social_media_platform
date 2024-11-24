@@ -41,29 +41,63 @@ export const getPostById = (req, res) => {
 
 // Create a new post
 export const createPost = (req, res) => {
+  console.log("Body:", req.body); // Logs text fields
+  console.log("File:", req.file); // Logs file details
   const { title, content } = req.body;
-  const user_id = req.user.id;
-
-  // Check for required fields
-  if (!user_id || !title || !content) {
-    return res.status(400).json({ message: 'Missing required fields' });
+  console.log(title);
+  const userId = req.user.id;
+  console.log(userId);
+  if (!title) {
+    return res.status(400).json({ error: "title required" });
+  }
+  if (!content) {
+    return res.status(400).json({ error: "content required" });
   }
 
-  const image = req.file ? req.file.path : null;
+  const image = req.file.path;
 
-  const sql = `
-    INSERT INTO posts (user_id, title, content, image)
-    VALUES (?, ?, ?, ?)
-  `;
-try{
-  db.query(sql, [user_id, title, content, image]) 
-  res.status(201).json({ message: "Post created successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error creating post" });
-  }
+  // Query to insert the post into the database
+  const insertPostQuery =
+    "INSERT INTO posts (user_id, title, content,image) VALUES (?, ?, ?,?)";
+  const values = [userId, title, content,image];
+
+  db.query(insertPostQuery, values, (err, result) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Failed to create post" });
+    }
+
+    // Query to fetch the post along with the user's full_name
+    const fetchPostQuery = `
+      SELECT 
+        posts.id, 
+        posts.title, 
+        posts.content, 
+        posts.image, 
+        posts.created_at, 
+        users.full_name 
+      FROM 
+        posts 
+      INNER JOIN 
+        users 
+      ON 
+        posts.user_id = users.id 
+      WHERE 
+        posts.id = ?`;
+
+    db.query(fetchPostQuery, [result.insertId], (err, postDetails) => {
+      if (err) {
+        console.error("Error fetching post details:", err);
+        return res.status(500).json({ error: "Failed to fetch post details" });
+      }
+
+      res.status(201).json({
+        message: "Post created successfully",
+        post: postDetails[0],
+      });
+    });
+  });
 };
-
 // Update an existing post
 export const updatePost = (req, res) => {
   const { id } = req.params;

@@ -2,7 +2,7 @@ import db from '../config/db.js';
 import fs from 'fs';
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
-const JWT_SECRET_KEY = 'my_secret_key';  // Hardcoded secret key
+const JWT_SECRET_KEY = 'your_secret_key';  // Hardcoded secret key
 const JWT_EXPIRATION = '1h';  // Hardcoded token expiration time
 export const getAllUsers = (req, res) => {
   db.query('SELECT * FROM users', (error, rows) => {

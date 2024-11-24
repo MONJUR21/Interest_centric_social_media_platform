@@ -17,6 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use('/postImages', express.static(path.join(__dirname, 'postImages')));
 
 db.connect((err) => {
@@ -27,6 +28,15 @@ db.connect((err) => {
   }
 });
 
+
+// Exclude express.json() for routes with multer
+app.use("/api/posts", (req, res, next) => {
+  if (req.is("multipart/form-data")) {
+    next(); // Skip express.json() and allow multer to handle it
+  } else {
+    express.json()(req, res, next); // Parse JSON for non-multipart requests
+  }
+});
 app.use('/api/users', userRoutes);
 app.use('/api/interests', interestRoutes);
 app.use('/api/posts', postRoutes);
