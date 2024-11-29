@@ -84,6 +84,7 @@ export const login = (req, res) => {
   // Query to get user from DB
   db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
     // Check if there's an error or no user found
+    console.log(results);
     if (err) {
       console.error('Database error:', err);
       return res.status(500).json({ error: 'Internal server error' });

@@ -10,7 +10,7 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET_KEY);
-    req.user = decoded; // Attach user info (id, username) to request
+    req.user = decoded;
     console.log(req.user);
     next();
   } catch (error) {

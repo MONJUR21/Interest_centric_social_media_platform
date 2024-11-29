@@ -4,7 +4,7 @@ import path from 'path';
 import { verifyToken } from '../controllers/verify.js';
 import {
   getAllPosts,
-  getPostById,
+  getPostsByUserId,
   createPost,
   updatePost,
   deletePost,
@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
     cb(null, 'postImages/'); // Ensure this directory exists
   },
   filename: (req, file, cb) => {
-    // console.log(file);
+    console.log(file);
     cb(null, Date.now() + path.extname(file.originalname)); // Unique file name
   },
 });
@@ -28,9 +28,9 @@ const upload = multer({ storage });
 
 // Routes
 router.get('/', getAllPosts);
-router.get('/:id', getPostById);
+router.get('/user',verifyToken, getPostsByUserId);
 router.post('/',verifyToken,upload.single('image'),createPost); // Upload image with post
-router.put('/:id', upload.single('image'), updatePost); // Allow image updates
+router.put('/:id',verifyToken, upload.single('image'), updatePost); // Allow image updates
 router.delete('/:id', deletePost);
 router.get('/interests/:userId', getPostsByUserInterest);
 

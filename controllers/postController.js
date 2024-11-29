@@ -18,48 +18,65 @@ export const getAllPosts = (req, res) => {
 };
 
 // Get a single post by ID
-export const getPostById = (req, res) => {
-  const { id } = req.params;
-
+export const getPostsByUserId = (req, res) => {
+  const userId = req.user.id;
+  console.log(userId);
   const sql = `
-    SELECT posts.id, posts.title, posts.content, posts.image, users.full_name
+    SELECT 
+      posts.id, 
+      posts.title, 
+      posts.content, 
+      posts.image, 
+      posts.created_at,
+      posts.interest, 
+      users.full_name
     FROM posts
     JOIN users ON posts.user_id = users.id
-    WHERE posts.id = ?
+    WHERE posts.user_id = ?
+    ORDER BY posts.created_at DESC
   `;
 
-  db.query(sql, [id], (error, rows) => {
+  db.query(sql, [userId], (error, rows) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-    res.json(rows[0]);
+    console.log(rows);
+    res.json(rows);
   });
 };
 
+
 // Create a new post
 export const createPost = (req, res) => {
-  console.log("Body:", req.body); // Logs text fields
-  console.log("File:", req.file); // Logs file details
-  const { title, content } = req.body;
-  console.log(title);
-  const userId = req.user.id;
+  console.log("Body:", req.body);
+  console.log("File:", req.file);
+
+  const { title, content, interest } = req.body; // Include `interest` from the form
+  const userId = req.user.id; // Assuming `req.user` is set by authentication middleware
   console.log(userId);
+  // Validate required fields
   if (!title) {
-    return res.status(400).json({ error: "title required" });
+    return res.status(400).json({ error: "Title is required" });
   }
   if (!content) {
-    return res.status(400).json({ error: "content required" });
+    return res.status(400).json({ error: "Content is required" });
+  }
+  if (!interest) {
+    return res.status(400).json({ error: "Interest is required" });
   }
 
-  const image = req.file.path;
+  // Ensure the file is provided and fetch the file path
+  const image = req.file ? req.file.path : null;
+  if (!image) {
+    return res.status(400).json({ error: "Image is required" });
+  }
 
   // Query to insert the post into the database
-  const insertPostQuery =
-    "INSERT INTO posts (user_id, title, content,image) VALUES (?, ?, ?,?)";
-  const values = [userId, title, content,image];
+  const insertPostQuery = `
+    INSERT INTO posts (user_id, title, content, image, interest) 
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  const values = [userId, title, content, image, interest];
 
   db.query(insertPostQuery, values, (err, result) => {
     if (err) {
@@ -74,6 +91,7 @@ export const createPost = (req, res) => {
         posts.title, 
         posts.content, 
         posts.image, 
+        posts.interest, 
         posts.created_at, 
         users.full_name 
       FROM 
@@ -83,14 +101,15 @@ export const createPost = (req, res) => {
       ON 
         posts.user_id = users.id 
       WHERE 
-        posts.id = ?`;
+        posts.id = ?
+    `;
 
     db.query(fetchPostQuery, [result.insertId], (err, postDetails) => {
       if (err) {
         console.error("Error fetching post details:", err);
         return res.status(500).json({ error: "Failed to fetch post details" });
       }
-
+      console.log(postDetails[0]);
       res.status(201).json({
         message: "Post created successfully",
         post: postDetails[0],
@@ -98,42 +117,70 @@ export const createPost = (req, res) => {
     });
   });
 };
+
 // Update an existing post
 export const updatePost = (req, res) => {
-  const { id } = req.params;
-  const { title, content } = req.body;
-  const image = req.file ? req.file.path : null;
+  const { id } = req.params; // Post ID
+  const { title, content, interest } = req.body; // Post details from request body
+  const userId = req.user.id; // ID of the logged-in user
+  const image = req.file ? req.file.path : null; // Uploaded image, if any
 
-  // Query to fetch the current image
-  const fetchImageSql = 'SELECT image FROM posts WHERE id = ?';
+  // Query to fetch the current image and validate post ownership
+  const fetchPostSql = 'SELECT image, user_id FROM posts WHERE id = ?';
 
-  db.query(fetchImageSql, [id], (error, rows) => {
+  db.query(fetchPostSql, [id], (error, rows) => {
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: 'Error fetching the post' }); // Handle query error
     }
+
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: 'Post not found' }); // Handle case where the post doesn't exist
     }
 
-    const currentImage = rows[0].image;
+    const currentImage = rows[0].image; // Current image path
+    const postOwnerId = rows[0].user_id; // Owner of the post
 
-    // Update query
-    const sql = `
-      UPDATE posts SET title = ?, content = ?, image = ?
+    // Validate if the user owns the post
+    if (postOwnerId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized to update this post' }); // Unauthorized access
+    }
+
+    // If a new image is uploaded, delete the old image
+    if (image && currentImage && fs.existsSync(currentImage)) {
+      fs.unlinkSync(currentImage);
+    }
+
+    // Update the post
+    const updateSql = `
+      UPDATE posts SET title = ?, content = ?, interest = ?, image = ?
       WHERE id = ?
     `;
-
-    db.query(sql, [title, content, image || currentImage, id], (error) => {
-      if (error) {
-        return res.status(500).json({ error: error.message });
+    db.query(updateSql, [title, content, interest, image || currentImage, id], (updateError) => {
+      if (updateError) {
+        return res.status(500).json({ error: 'Error updating the post' });
       }
 
-      // Delete old image if a new one is uploaded
-      if (image && currentImage) {
-        fs.unlinkSync(currentImage);
-      }
+      // Fetch the updated post with user details
+      const fetchUpdatedPostSql = `
+        SELECT 
+          posts.*, 
+          users.full_name
+        FROM posts 
+        JOIN users ON posts.user_id = users.id 
+        WHERE posts.id = ?
+      `;
+      db.query(fetchUpdatedPostSql, [id], (fetchError, updatedRows) => {
+        if (fetchError) {
+          return res.status(500).json({ error: 'Error fetching the updated post' });
+        }
 
-      res.json({ message: 'Post updated successfully' });
+        if (updatedRows.length === 0) {
+          return res.status(404).json({ error: 'Updated post not found' }); // Handle rare case
+        }
+
+        // Send the updated post back to the client
+        res.json({ post: updatedRows[0] });
+      });
     });
   });
 };
