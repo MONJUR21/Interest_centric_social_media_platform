@@ -1,26 +1,35 @@
 import db from '../config/db.js';
 import fs from 'fs';
 
-// Get all posts
 export const getAllPosts = (req, res) => {
-  const sql = `
-    SELECT posts.id, posts.title, posts.content, posts.image, users.full_name
+  const query = `
+    SELECT 
+      posts.id, 
+      posts.title, 
+      posts.content, 
+      posts.image, 
+      posts.created_at AS date,
+      posts.interest, 
+      users.full_name AS author,
+      users.profile_picture
     FROM posts
     JOIN users ON posts.user_id = users.id
+    ORDER BY posts.created_at DESC;
   `;
 
-  db.query(sql, (error, rows) => {
+  db.query(query, (error, results) => {
     if (error) {
-      return res.status(500).json({ error: error.message });
+      console.error("Database query error:", error.message); 
+      return res.status(500).json({ error: "Error fetching posts: " + error.message });
     }
-    res.json(rows);
+
+    res.status(200).json(results);
   });
 };
 
-// Get a single post by ID
+
 export const getPostsByUserId = (req, res) => {
   const userId = req.user.id;
-  console.log(userId);
   const sql = `
     SELECT 
       posts.id, 
@@ -40,21 +49,15 @@ export const getPostsByUserId = (req, res) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
-    console.log(rows);
     res.json(rows);
   });
 };
 
 
-// Create a new post
 export const createPost = (req, res) => {
-  console.log("Body:", req.body);
-  console.log("File:", req.file);
 
-  const { title, content, interest } = req.body; // Include `interest` from the form
-  const userId = req.user.id; // Assuming `req.user` is set by authentication middleware
-  console.log(userId);
-  // Validate required fields
+  const { title, content, interest } = req.body;
+  const userId = req.user.id;
   if (!title) {
     return res.status(400).json({ error: "Title is required" });
   }
@@ -65,13 +68,8 @@ export const createPost = (req, res) => {
     return res.status(400).json({ error: "Interest is required" });
   }
 
-  // Ensure the file is provided and fetch the file path
   const image = req.file ? req.file.path : null;
-  if (!image) {
-    return res.status(400).json({ error: "Image is required" });
-  }
 
-  // Query to insert the post into the database
   const insertPostQuery = `
     INSERT INTO posts (user_id, title, content, image, interest) 
     VALUES (?, ?, ?, ?, ?)
@@ -84,7 +82,6 @@ export const createPost = (req, res) => {
       return res.status(500).json({ error: "Failed to create post" });
     }
 
-    // Query to fetch the post along with the user's full_name
     const fetchPostQuery = `
       SELECT 
         posts.id, 
@@ -109,7 +106,6 @@ export const createPost = (req, res) => {
         console.error("Error fetching post details:", err);
         return res.status(500).json({ error: "Failed to fetch post details" });
       }
-      console.log(postDetails[0]);
       res.status(201).json({
         message: "Post created successfully",
         post: postDetails[0],
@@ -118,39 +114,35 @@ export const createPost = (req, res) => {
   });
 };
 
-// Update an existing post
 export const updatePost = (req, res) => {
-  const { id } = req.params; // Post ID
-  const { title, content, interest } = req.body; // Post details from request body
-  const userId = req.user.id; // ID of the logged-in user
-  const image = req.file ? req.file.path : null; // Uploaded image, if any
+  const { id } = req.params; 
+  const { title, content, interest } = req.body;
+  const userId = req.user.id; 
+  const image = req.file ? req.file.path : null; 
 
-  // Query to fetch the current image and validate post ownership
   const fetchPostSql = 'SELECT image, user_id FROM posts WHERE id = ?';
 
   db.query(fetchPostSql, [id], (error, rows) => {
     if (error) {
-      return res.status(500).json({ error: 'Error fetching the post' }); // Handle query error
+      return res.status(500).json({ error: 'Error fetching the post' });
     }
 
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Post not found' }); // Handle case where the post doesn't exist
+      return res.status(404).json({ error: 'Post not found' });
     }
 
-    const currentImage = rows[0].image; // Current image path
-    const postOwnerId = rows[0].user_id; // Owner of the post
+    const currentImage = rows[0].image; 
+    const postOwnerId = rows[0].user_id; 
 
     // Validate if the user owns the post
     if (postOwnerId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized to update this post' }); // Unauthorized access
+      return res.status(403).json({ error: 'Unauthorized to update this post' }); 
     }
 
-    // If a new image is uploaded, delete the old image
     if (image && currentImage && fs.existsSync(currentImage)) {
       fs.unlinkSync(currentImage);
     }
 
-    // Update the post
     const updateSql = `
       UPDATE posts SET title = ?, content = ?, interest = ?, image = ?
       WHERE id = ?
@@ -160,7 +152,6 @@ export const updatePost = (req, res) => {
         return res.status(500).json({ error: 'Error updating the post' });
       }
 
-      // Fetch the updated post with user details
       const fetchUpdatedPostSql = `
         SELECT 
           posts.*, 
@@ -178,18 +169,15 @@ export const updatePost = (req, res) => {
           return res.status(404).json({ error: 'Updated post not found' }); // Handle rare case
         }
 
-        // Send the updated post back to the client
         res.json({ post: updatedRows[0] });
       });
     });
   });
 };
 
-// Delete a post
 export const deletePost = (req, res) => {
   const { id } = req.params;
 
-  // Query to fetch the current image
   const fetchImageSql = 'SELECT image FROM posts WHERE id = ?';
 
   db.query(fetchImageSql, [id], (error, rows) => {
@@ -202,7 +190,6 @@ export const deletePost = (req, res) => {
 
     const currentImage = rows[0].image;
 
-    // Delete the post
     const sql = 'DELETE FROM posts WHERE id = ?';
 
     db.query(sql, [id], (error) => {
@@ -210,7 +197,6 @@ export const deletePost = (req, res) => {
         return res.status(500).json({ error: error.message });
       }
 
-      // Delete the image file if it exists
       if (currentImage) {
         fs.unlinkSync(currentImage);
       }
@@ -219,8 +205,6 @@ export const deletePost = (req, res) => {
     });
   });
 };
-
-// Get posts by user interest
 export const getPostsByUserInterest = (req, res) => {
   const { userId } = req.params;
 
@@ -239,4 +223,20 @@ export const getPostsByUserInterest = (req, res) => {
     }
     res.json(rows);
   });
+};
+
+
+export const getPostCountByInterest =(req, res) => {
+  const userId = req.user.id;
+
+    const query = `
+      SELECT interest, COUNT(*) AS post_count
+      FROM posts
+      WHERE user_id = ?
+      GROUP BY interest;
+    `;
+    db.query(query, [userId],(err,rows)=>{
+      if(err) console.error(err);
+      res.json(rows);
+    });   
 };

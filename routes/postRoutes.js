@@ -9,6 +9,7 @@ import {
   updatePost,
   deletePost,
   getPostsByUserInterest,
+  getPostCountByInterest
 } from '../controllers/postController.js';
 
 const router = express.Router();
@@ -20,7 +21,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     console.log(file);
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique file name
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
@@ -29,9 +30,12 @@ const upload = multer({ storage });
 // Routes
 router.get('/', getAllPosts);
 router.get('/user',verifyToken, getPostsByUserId);
-router.post('/',verifyToken,upload.single('image'),createPost); // Upload image with post
-router.put('/:id',verifyToken, upload.single('image'), updatePost); // Allow image updates
+router.post('/',verifyToken,upload.single('image'),createPost);
+router.put('/:id',verifyToken, upload.single('image'), updatePost); 
 router.delete('/:id', deletePost);
 router.get('/interests/:userId', getPostsByUserInterest);
+router.get('/interests',verifyToken, getPostCountByInterest);
+
+
 
 export default router;

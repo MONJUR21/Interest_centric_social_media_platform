@@ -37,34 +37,34 @@ export const getFollowing = (req, res) => {
   });
 };
 
-export const followUser = (req, res) => {
-  const { follower_id, followed_id } = req.body;
-  const checkFollowQuery = 'SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?';
-  const insertFollowQuery = 'INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)';
-  
-  if (follower_id === followed_id) {
-    return res.status(400).json({ error: "You can't follow yourself" });
+export const followUser = async (req, res) => {
+  const { userId } = req.body; 
+  const followerId = req.user.id; 
+
+  try {
+    // Check if the follow record already exists
+    const [rows] = await db.promise().query(
+      'SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?',
+      [followerId, userId]
+    );
+
+    if (rows.length > 0) {
+      return res.status(400).json({ message: 'Already following this user' });
+    }
+
+    // Add the follow relationship to the database
+    await db.promise().query(
+      'INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)',
+      [followerId, userId]
+    );
+
+    return res.status(200).json({ message: 'User followed successfully' });
+  } catch (error) {
+    console.error('Error following user:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
-
-  db.query(checkFollowQuery, [follower_id, followed_id], (err, existingFollow) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-
-    if (existingFollow.length > 0) {
-      return res.status(400).json({ error: 'Already following this user' });
-    }
-
-    db.query(insertFollowQuery, [follower_id, followed_id], (err) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      createNotification(followed_id, 'follow', follower_id, `User ${follower_id} started following you`);
-
-      res.status(201).json({ message: 'User followed successfully' });
-    });
-  });
 };
+
 
 export const unfollowUser = (req, res) => {
   const { follower_id, followed_id } = req.body;

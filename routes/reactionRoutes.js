@@ -3,13 +3,12 @@ import express from 'express';
 import {
   getReactionsForPost,
   addReaction,
-  deleteReaction
 } from '../controllers/reactionController.js';
+import { verifyToken } from '../controllers/verify.js';
 
 const router = express.Router();
 
-router.get('/post/:postId', getReactionsForPost);
-router.post('/', addReaction);
-router.delete('/:id', deleteReaction);
+router.get('/post/:postId',verifyToken, getReactionsForPost);
+router.post('/',verifyToken, addReaction);
 
 export default router;

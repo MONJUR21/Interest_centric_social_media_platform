@@ -2,7 +2,13 @@ import db from "../config/db.js";
 
 export const getAllCommentsForPost = (req, res) => {
   const { postId } = req.params;
-  const query = "SELECT * FROM comments WHERE post_id = ?";
+  const query = `
+    SELECT c.id, c.content, c.created_at, u.full_name 
+    FROM comments c 
+    JOIN users u ON c.user_id = u.id 
+    WHERE c.post_id = ? 
+    ORDER BY c.created_at DESC
+  `;
 
   db.query(query, [postId], (err, rows) => {
     if (err) {
@@ -15,7 +21,12 @@ export const getAllCommentsForPost = (req, res) => {
 
 export const getCommentById = (req, res) => {
   const { id } = req.params;
-  const query = "SELECT * FROM comments WHERE id = ?";
+  const query = `
+    SELECT c.id, c.content, c.created_at, u.full_name 
+    FROM comments c 
+    JOIN users u ON c.user_id = u.id 
+    WHERE c.id = ?
+  `;
 
   db.query(query, [id], (err, rows) => {
     if (err) {
@@ -29,16 +40,32 @@ export const getCommentById = (req, res) => {
 };
 
 export const createComment = (req, res) => {
-  const { user_id, post_id, content } = req.body;
-  const query =
-    "INSERT INTO comments (user_id, post_id, content) VALUES (?, ?, ?)";
+  const { post_id, content } = req.body;
+  const user_id = req.user.id;
 
-  db.query(query, [user_id, post_id, content], (err, result) => {
+  if (!user_id || !post_id || !content) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  const insertQuery = 'INSERT INTO comments (user_id, post_id, content) VALUES (?, ?, ?)';
+  db.query(insertQuery, [user_id, post_id, content], (err) => {
     if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.status(201).json({ id: result.insertId });
+      return res.status(500).json({ error: 'Error adding comment' });
     }
+
+    const fetchCommentsQuery = `
+      SELECT c.id, c.content, c.created_at, u.full_name 
+      FROM comments c 
+      JOIN users u ON c.user_id = u.id 
+      WHERE c.post_id = ? 
+      ORDER BY c.created_at DESC
+    `;
+    db.query(fetchCommentsQuery, [post_id], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error fetching comments' });
+      }
+      res.status(201).json({ comments: results }); // Return all comments
+    });
   });
 };
 
@@ -123,4 +150,3 @@ export const deleteReply = (req, res) => {
     }
   });
 };
-

@@ -10,13 +10,14 @@ import {
   updateReply,
   deleteReply
 } from '../controllers/commentController.js';
+import { verifyToken } from '../controllers/verify.js';
 
 const router = express.Router();
 
-router.get('/post/:postId', getAllCommentsForPost);
+router.get('/post/:postId',verifyToken, getAllCommentsForPost);
 router.get('/:id', getCommentById);
-router.post('/', createComment);
-router.put('/:id', updateComment);
+router.post('/',verifyToken, createComment);
+router.put('/:id', verifyToken,updateComment);
 router.delete('/:id', deleteComment);
 
 router.get('/:id/replies', getRepliesForComment);

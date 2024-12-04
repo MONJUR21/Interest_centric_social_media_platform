@@ -1,4 +1,3 @@
-// controllers/notificationController.js
 import db from '../config/db.js';
 
 export const getUserNotifications = (req, res) => {
