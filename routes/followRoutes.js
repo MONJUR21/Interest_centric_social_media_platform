@@ -16,7 +16,6 @@ router.get("/followers", verifyToken, getFollowers);
 router.get("/following", verifyToken, getFollowing);
 router.post("/", verifyToken, followUser);
 router.post("/unfollow", verifyToken, unfollowUser);
-
 router.get("/counts", verifyToken, getFollowCounts);
 
 export default router;

@@ -1,4 +1,5 @@
 import db from "../config/db.js";
+import { createNotification } from "./notificationController.js";
 
 export const getAllCommentsForPost = (req, res) => {
   const { postId } = req.params;
@@ -53,18 +54,41 @@ export const createComment = (req, res) => {
       return res.status(500).json({ error: 'Error adding comment' });
     }
 
-    const fetchCommentsQuery = `
-      SELECT c.id, c.content, c.created_at, u.full_name 
-      FROM comments c 
-      JOIN users u ON c.user_id = u.id 
-      WHERE c.post_id = ? 
-      ORDER BY c.created_at DESC
-    `;
-    db.query(fetchCommentsQuery, [post_id], (err, results) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error fetching comments' });
+    // Fetch the post owner's ID
+    const fetchPostOwnerQuery = 'SELECT user_id FROM posts WHERE id = ?';
+    db.query(fetchPostOwnerQuery, [post_id], (postOwnerError, postOwnerResult) => {
+      if (postOwnerError) {
+        return res.status(500).json({ error: 'Error fetching post owner' });
       }
-      res.status(201).json({ comments: results }); // Return all comments
+
+      if (postOwnerResult.length > 0) {
+        const postOwnerId = postOwnerResult[0].user_id;
+
+        // Avoid sending a notification if the comment author is the same as the post owner
+        if (postOwnerId !== user_id) {
+          createNotification(
+            postOwnerId, // Notify the post owner
+            'comment', // Notification type
+            post_id, // Reference to the post
+            `User ${req.user.username} commented on your post: "${content}"` // Message
+          );
+        }
+      }
+
+      // Fetch and return updated comments
+      const fetchCommentsQuery = `
+        SELECT c.id, c.content, c.created_at, u.full_name 
+        FROM comments c 
+        JOIN users u ON c.user_id = u.id 
+        WHERE c.post_id = ? 
+        ORDER BY c.created_at DESC
+      `;
+      db.query(fetchCommentsQuery, [post_id], (fetchCommentsError, results) => {
+        if (fetchCommentsError) {
+          return res.status(500).json({ error: 'Error fetching comments' });
+        }
+        res.status(201).json({ comments: results }); // Return all comments
+      });
     });
   });
 };

@@ -1,7 +1,7 @@
 import db from '../config/db.js';
 
 export const getUserNotifications = (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id;
   db.query(
     'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC',
     [userId],

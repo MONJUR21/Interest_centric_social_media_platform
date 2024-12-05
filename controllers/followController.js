@@ -1,5 +1,5 @@
 import db from "../config/db.js";
-
+import { createNotification } from "./notificationController.js";
 // Get all users except the logged-in user
 export const getUsers = (req, res) => {
   const userId = req.user.id; // Extract user ID from middleware-decoded token
@@ -82,7 +82,7 @@ export const followUser = (req, res) => {
         console.error("Error following user:", err);
         return res.status(500).json({ message: "Internal Server Error" });
       }
-
+      createNotification(followUserId, 'follow', followerId, 'You have a new follower.');
       res.status(200).json({ message: "User followed successfully", followUserId });
     });
   });

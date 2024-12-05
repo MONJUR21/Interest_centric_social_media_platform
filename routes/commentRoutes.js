@@ -15,7 +15,7 @@ import { verifyToken } from '../controllers/verify.js';
 const router = express.Router();
 
 router.get('/post/:postId',verifyToken, getAllCommentsForPost);
-router.get('/:id', getCommentById);
+router.get('/:id',verifyToken, getCommentById);
 router.post('/',verifyToken, createComment);
 router.put('/:id', verifyToken,updateComment);
 router.delete('/:id',verifyToken, deleteComment);
