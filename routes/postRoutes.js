@@ -33,7 +33,7 @@ router.get('/user',verifyToken, getPostsByUserId);
 router.post('/',verifyToken,upload.single('image'),createPost);
 router.put('/:id',verifyToken, upload.single('image'), updatePost); 
 router.delete('/:id', deletePost);
-router.get('/interests/:userId', getPostsByUserInterest);
+router.get('/interests/user',verifyToken, getPostsByUserInterest);
 router.get('/interests',verifyToken, getPostCountByInterest);
 
 

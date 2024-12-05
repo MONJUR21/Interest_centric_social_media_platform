@@ -72,29 +72,56 @@ export const createComment = (req, res) => {
 export const updateComment = (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
-  const query = "UPDATE comments SET content = ? WHERE id = ?";
+  const userId = req.user.id; // Assume the user's ID is available in req.user from JWT middleware.
 
-  db.query(query, [content, id], (err) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.json({ message: "Comment updated successfully" });
+  const checkOwnershipQuery = "SELECT user_id FROM comments WHERE id = ?";
+  const updateQuery = "UPDATE comments SET content = ? WHERE id = ?";
+
+  db.query(checkOwnershipQuery, [id], (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(404).json({ error: "Comment not found" });
     }
+
+    if (results[0].user_id !== userId) {
+      return res.status(403).json({ error: "Unauthorized to update this comment" });
+    }
+
+    db.query(updateQuery, [content, id], (err) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ message: "Comment updated successfully", updatedContent: content });
+      }
+    });
   });
 };
 
 export const deleteComment = (req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM comments WHERE id = ?";
+  const userId = req.user.id; // Assume the user's ID is available in req.user from JWT middleware.
 
-  db.query(query, [id], (err) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.json({ message: "Comment deleted successfully" });
+  const checkOwnershipQuery = "SELECT user_id FROM comments WHERE id = ?";
+  const deleteQuery = "DELETE FROM comments WHERE id = ?";
+
+  db.query(checkOwnershipQuery, [id], (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(404).json({ error: "Comment not found" });
     }
+
+    if (results[0].user_id !== userId) {
+      return res.status(403).json({ error: "Unauthorized to delete this comment" });
+    }
+
+    db.query(deleteQuery, [id], (err) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ message: "Comment deleted successfully", deletedCommentId: id });
+      }
+    });
   });
 };
+
 
 export const getRepliesForComment = (req, res) => {
   const { id } = req.params; // Comment ID

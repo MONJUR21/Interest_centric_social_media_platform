@@ -1,5 +1,5 @@
-import db from '../config/db.js';
-import fs from 'fs';
+import db from "../config/db.js";
+import fs from "fs";
 
 export const getAllPosts = (req, res) => {
   const query = `
@@ -19,14 +19,15 @@ export const getAllPosts = (req, res) => {
 
   db.query(query, (error, results) => {
     if (error) {
-      console.error("Database query error:", error.message); 
-      return res.status(500).json({ error: "Error fetching posts: " + error.message });
+      console.error("Database query error:", error.message);
+      return res
+        .status(500)
+        .json({ error: "Error fetching posts: " + error.message });
     }
 
     res.status(200).json(results);
   });
 };
-
 
 export const getPostsByUserId = (req, res) => {
   const userId = req.user.id;
@@ -53,9 +54,7 @@ export const getPostsByUserId = (req, res) => {
   });
 };
 
-
 export const createPost = (req, res) => {
-
   const { title, content, interest } = req.body;
   const userId = req.user.id;
   if (!title) {
@@ -115,28 +114,30 @@ export const createPost = (req, res) => {
 };
 
 export const updatePost = (req, res) => {
-  const { id } = req.params; 
+  const { id } = req.params;
   const { title, content, interest } = req.body;
-  const userId = req.user.id; 
-  const image = req.file ? req.file.path : null; 
+  const userId = req.user.id;
+  const image = req.file ? req.file.path : null;
 
-  const fetchPostSql = 'SELECT image, user_id FROM posts WHERE id = ?';
+  const fetchPostSql = "SELECT image, user_id FROM posts WHERE id = ?";
 
   db.query(fetchPostSql, [id], (error, rows) => {
     if (error) {
-      return res.status(500).json({ error: 'Error fetching the post' });
+      return res.status(500).json({ error: "Error fetching the post" });
     }
 
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: "Post not found" });
     }
 
-    const currentImage = rows[0].image; 
-    const postOwnerId = rows[0].user_id; 
+    const currentImage = rows[0].image;
+    const postOwnerId = rows[0].user_id;
 
     // Validate if the user owns the post
     if (postOwnerId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized to update this post' }); 
+      return res
+        .status(403)
+        .json({ error: "Unauthorized to update this post" });
     }
 
     if (image && currentImage && fs.existsSync(currentImage)) {
@@ -147,12 +148,15 @@ export const updatePost = (req, res) => {
       UPDATE posts SET title = ?, content = ?, interest = ?, image = ?
       WHERE id = ?
     `;
-    db.query(updateSql, [title, content, interest, image || currentImage, id], (updateError) => {
-      if (updateError) {
-        return res.status(500).json({ error: 'Error updating the post' });
-      }
+    db.query(
+      updateSql,
+      [title, content, interest, image || currentImage, id],
+      (updateError) => {
+        if (updateError) {
+          return res.status(500).json({ error: "Error updating the post" });
+        }
 
-      const fetchUpdatedPostSql = `
+        const fetchUpdatedPostSql = `
         SELECT 
           posts.*, 
           users.full_name
@@ -160,37 +164,40 @@ export const updatePost = (req, res) => {
         JOIN users ON posts.user_id = users.id 
         WHERE posts.id = ?
       `;
-      db.query(fetchUpdatedPostSql, [id], (fetchError, updatedRows) => {
-        if (fetchError) {
-          return res.status(500).json({ error: 'Error fetching the updated post' });
-        }
+        db.query(fetchUpdatedPostSql, [id], (fetchError, updatedRows) => {
+          if (fetchError) {
+            return res
+              .status(500)
+              .json({ error: "Error fetching the updated post" });
+          }
 
-        if (updatedRows.length === 0) {
-          return res.status(404).json({ error: 'Updated post not found' }); // Handle rare case
-        }
+          if (updatedRows.length === 0) {
+            return res.status(404).json({ error: "Updated post not found" }); // Handle rare case
+          }
 
-        res.json({ post: updatedRows[0] });
-      });
-    });
+          res.json({ post: updatedRows[0] });
+        });
+      }
+    );
   });
 };
 
 export const deletePost = (req, res) => {
   const { id } = req.params;
 
-  const fetchImageSql = 'SELECT image FROM posts WHERE id = ?';
+  const fetchImageSql = "SELECT image FROM posts WHERE id = ?";
 
   db.query(fetchImageSql, [id], (error, rows) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: "Post not found" });
     }
 
     const currentImage = rows[0].image;
 
-    const sql = 'DELETE FROM posts WHERE id = ?';
+    const sql = "DELETE FROM posts WHERE id = ?";
 
     db.query(sql, [id], (error) => {
       if (error) {
@@ -201,20 +208,18 @@ export const deletePost = (req, res) => {
         fs.unlinkSync(currentImage);
       }
 
-      res.json({ message: 'Post deleted successfully' });
+      res.json({ message: "Post deleted successfully" });
     });
   });
 };
 export const getPostsByUserInterest = (req, res) => {
-  const { userId } = req.params;
+
+  const userId = req.user.id;
 
   const sql = `
-    SELECT p.id, p.title, p.content, p.image, u.full_name
-    FROM posts p
-    JOIN post_interests pi ON p.id = pi.post_id
-    JOIN user_interests ui ON pi.interest_id = ui.interest_id
-    JOIN users u ON p.user_id = u.id
-    WHERE ui.user_id = ?
+    SELECT COUNT(*) AS posts_count
+    FROM posts
+    WHERE user_id = ?;
   `;
 
   db.query(sql, [userId], (error, rows) => {
@@ -225,18 +230,17 @@ export const getPostsByUserInterest = (req, res) => {
   });
 };
 
-
-export const getPostCountByInterest =(req, res) => {
+export const getPostCountByInterest = (req, res) => {
   const userId = req.user.id;
 
-    const query = `
+  const query = `
       SELECT interest, COUNT(*) AS post_count
       FROM posts
       WHERE user_id = ?
       GROUP BY interest;
     `;
-    db.query(query, [userId],(err,rows)=>{
-      if(err) console.error(err);
-      res.json(rows);
-    });   
+  db.query(query, [userId], (err, rows) => {
+    if (err) console.error(err);
+    res.json(rows);
+  });
 };

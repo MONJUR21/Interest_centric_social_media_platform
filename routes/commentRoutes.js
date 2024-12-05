@@ -18,7 +18,7 @@ router.get('/post/:postId',verifyToken, getAllCommentsForPost);
 router.get('/:id', getCommentById);
 router.post('/',verifyToken, createComment);
 router.put('/:id', verifyToken,updateComment);
-router.delete('/:id', deleteComment);
+router.delete('/:id',verifyToken, deleteComment);
 
 router.get('/:id/replies', getRepliesForComment);
 router.post('/:id/replies', addReplyToComment);
